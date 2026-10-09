@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Sentimen Abu Vulkanik Anak Krakatau</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Data Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <nav class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center shadow-lg sticky top-0 z-50 backdrop-blur-md bg-slate-900/90">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-amber-600 to-orange-500 text-white p-2.5 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg shadow-orange-600/20">
+                <i class="fa-solid fa-volcano"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    KrakatauPulse <span class="text-xs bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded-full font-medium">Live Monitor</span>
+                </h1>
+                <p class="text-xs text-slate-400">Analisis Sentimen Masyarakat & Pemantauan Abu Vulkanik Anak Krakatau</p>
+            </div>
+        </div>
+        <div id="connection-status" class="flex items-center space-x-2 px-3.5 py-1.5 bg-slate-800/80 border border-slate-700/80 rounded-full text-xs font-medium text-slate-300 shadow-inner">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+            <span>Siap Menghubungkan Apify</span>
+        </div>
+    </nav>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- Sidebar Konfigurasi Apify -->
+        <div class="lg:col-span-1 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col space-y-5 h-fit">
+            <h2 class="text-sm font-semibold text-white flex items-center space-x-2 border-b border-slate-800 pb-3">
+                <i class="fa-solid fa-sliders text-orange-400"></i>
+                <span>Pengaturan Sumber Data</span>
+            </h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Apify API Token</label>
+                    <div class="relative">
+                        <input type="password" id="api-token" value="apify_api_MxpRr6b7TUJdayI2yuOZhrgJf8HFSv2D13R0" 
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-orange-500 pr-9">
+                        <button onclick="toggleTokenVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-xs">
+                            <i class="fa-solid fa-eye" id="toggle-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Dataset ID / Scraper Actor</label>
+                    <input type="text" id="dataset-id" 
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-orange-500"
+                        placeholder="Contoh: wKbvX... atau Nama Actor">
+                    <p class="text-[10px] text-slate-400 mt-1">Masukkan Dataset ID dari hasil run Apify (misal: Twitter/X atau News Scraper tentang Krakatau).</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Simulasi Data (Demo Instan)</label>
+                    <button onclick="loadDemoData()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2 px-3 rounded-xl text-xs transition border border-slate-700 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-bolt text-amber-400"></i>
+                        <span>Gunakan Contoh Data Sentimen</span>
+                    </button>
+                </div>
+
+                <button onclick="fetchApifyData()" class="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 active:scale-[0.98] text-white font-medium py-2.5 px-4 rounded-xl text-xs transition-all shadow-lg shadow-orange-600/25 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    <span>Tarik Data Apify</span>
+                </button>
+            </div>
+
+            <div class="border-t border-slate-800 pt-4 mt-auto">
+                <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Export Laporan</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="exportData('json')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] py-2 px-2 rounded-xl transition flex items-center justify-center space-x-1.5 border border-slate-700">
+                        <i class="fa-solid fa-file-code text-orange-400"></i>
+                        <span>JSON</span>
+                    </button>
+                    <button onclick="exportData('csv')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] py-2 px-2 rounded-xl transition flex items-center justify-center space-x-1.5 border border-slate-700">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                        <span>CSV</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 flex flex-col space-y-5">
+            
+            <!-- Statistik & Metrik Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-face-smile"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Sentimen Positif / Tenang</p>
+                        <h3 id="stat-positive" class="text-2xl font-bold text-white mt-0.5">0%</h3>
+                        <p class="text-[10px] text-emerald-400 mt-0.5">Informatif & Waspada Terkendali</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-face-neutral"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Sentimen Netral</p>
+                        <h3 id="stat-neutral" class="text-2xl font-bold text-white mt-0.5">0%</h3>
+                        <p class="text-[10px] text-amber-400 mt-0.5">Berita & Laporan Observasi</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-face-frown"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Sentimen Khawatir / Negatif</p>
+                        <h3 id="stat-negative" class="text-2xl font-bold text-white mt-0.5">0%</h3>
+                        <p class="text-[10px] text-rose-400 mt-0.5">Panik / Keluhan Debu Abu</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-5 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div class="md:col-span-1">
+                    <h3 class="text-sm font-semibold text-white">Proporsi Sentimen Publik</h3>
+                    <p class="text-xs text-slate-400 mt-1">Klasifikasi otomatis teks percetakan media sosial/berita terkait aktivitas abu vulkanik.</p>
+                </div>
+                <div class="md:col-span-2 h-48 flex justify-center">
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Toolbar & Search -->
+            <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="relative w-full sm:w-80">
+                    <i class="fa-solid fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="search-input" onkeyup="filterTable()" 
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-orange-500" 
+                        placeholder="Cari isi postingan atau lokasi...">
+                </div>
+                <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+                    <span id="data-counter" class="text-xs text-slate-400 font-medium">0 data ditampilkan</span>
+                </div>
+            </div>
+
+            <!-- Tabel Data Utama -->
+            <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl shadow-xl flex-1 flex flex-col overflow-hidden min-h-[400px]">
+                
+                <!-- Loading State -->
+                <div id="loading-state" class="hidden flex-1 flex flex-col items-center justify-center p-12 space-y-3">
+                    <div class="w-8 h-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-xs text-slate-400 font-medium">Mengambil dan menganalisis data Apify...</p>
+                </div>
+
+                <!-- Initial Empty State -->
+                <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-3">
+                    <div class="w-14 h-14 bg-slate-800/80 rounded-2xl flex items-center justify-center text-orange-400 text-xl shadow-inner border border-slate-700/50">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-white">Belum Ada Data Dimuat</h3>
+                    <p class="text-xs text-slate-400 max-w-sm">Klik tombol <span class="text-orange-400 font-medium">"Gunakan Contoh Data Sentimen"</span> untuk demo instan atau masukkan Dataset ID dari Apify Anda.</p>
+                </div>
+
+                <!-- Table Container -->
+                <div id="table-container" class="hidden flex-1 overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                            <tr>
+                                <th class="px-4 py-3">Waktu / Tanggal</th>
+                                <th class="px-4 py-3">Sumber / Akun</th>
+                                <th class="px-4 py-3">Isi Postingan / Opini</th>
+                                <th class="px-4 py-3">Lokasi</th>
+                                <th class="px-4 py-3">Sentimen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-slate-800/50 text-slate-300">
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        let currentRawData = null;
+        let sentimentChartInstance = null;
+
+        function toggleTokenVisibility() {
+            const tokenInput = document.getElementById('api-token');
+            const toggleIcon = document.getElementById('toggle-icon');
+            if (tokenInput.type === 'password') {
+                tokenInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                tokenInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        // Demo data realistis tentang Abu Vulkanik Anak Krakatau
+        function loadDemoData() {
+            const demoData = [
+                {
+                    timestamp: "2026-10-09 07:30",
+                    author: "@infobencana_id",
+                    text: "Laporan Pos Pengamatan Gunung Anak Krakatau mencatat adanya aktivitas erupsi kecil dengan sebaran abu tipis mengarah ke barat daya. Masyarakat diimbau tetap tenang dan memakai masker jika keluar rumah.",
+                    location: "Lampung Selatan",
+                    sentiment: "Netral"
+                },
+                {
+                    timestamp: "2026-10-09 08:15",
+                    author: "@budi_lestari",
+                    text: "Waduh debu vulkanik mulai turun tipis di teras rumah daerah sekitar Kalianda. Mobil jadi berdebu putih semua. Semoga aktivitas gunungnya lekas mereda ya Allah.",
+                    location: "Kalianda, Lampung",
+                    sentiment: "Negatif"
+                },
+                {
+                    timestamp: "2026-10-09 08:45",
+                    author: "@Siti_Rahma99",
+                    text: "Alhamdulillah pagi ini pemandangan Selat Sunda terpantau aman meskipun sempat terdengar dentuman samar tadi malam. Tim BMKG dan PVMBG sigap terus berikan info.",
+                    location: "Anyer, Banten",
+                    sentiment: "Positif"
+                },
+                {
+                    timestamp: "2026-10-09 09:10",
+                    author: "@detik_update",
+                    text: "PVMBG menaikkan status waspada level II pasca peningkatan aktivitas vulkanik Anak Krakatau yang memuntahkan abu vulkanik setinggi kurang lebih 500 meter di atas puncak.",
+                    location: "Nasional",
+                    sentiment: "Netral"
+                },
+                {
+                    timestamp: "2026-10-09 09:40",
+                    author: "@rizky_septian",
+                    text: "Debunya bikin mata perih kalau naik motor tanpa kacamata pelindung. Buat pengendara di jalur pantai lampung hati-hati ya, pakai masker kain/medis dulu.",
+                    location: "Lampung",
+                    sentiment: "Negatif"
+                },
+                {
+                    timestamp: "2026-10-09 10:05",
+                    author: "@destinasi_lampung",
+                    text: "Kondisi pariwisata pantai sekitar masih terkendali dan aman dikunjungi sejauh radius aman dipatuhi wisatawan. Tetap pantau info resmi dari instansi terkait.",
+                    location: "Lampung",
+                    sentiment: "Positif"
+                },
+                {
+                    timestamp: "2026-10-09 10:30",
+                    author: "@eko_prabowo",
+                    text: "Abu tipis terbawa angin ke arah timur laut. Tanaman sayur warga sempat tertutup debu vulkanik putih, semoga tidak merusak hasil panen.",
+                    location: "Pandeglang, Banten",
+                    sentiment: "Negatif"
+                },
+                {
+                    timestamp: "2026-10-09 11:00",
+                    author: "@radarlampung_",
+                    text: "BPBD distribusikan ribuan masker gratis kepada warga pesisir pantai pasca sebaran abu vulkanik Anak Krakatau pagi ini.",
+                    location: "Lampung Selatan",
+                    sentiment: "Positif"
+                }
+            ];
+
+            currentRawData = demoData;
+            renderDashboard(demoData);
+            updateConnectionStatus(true, 'Mode Demo Aktif');
+        }
+
+        async function fetchApifyData() {
+            const token = document.getElementById('api-token').value.trim();
+            const datasetId = document.getElementById('dataset-id').value.trim();
+
+            if (!token) {
+                alert('Mohon masukkan Token Apify Anda!');
+                return;
+            }
+
+            if (!datasetId) {
+                alert('Karena Anda belum mengisi Dataset ID, sistem akan memuat data demo otomatis.');
+                loadDemoData();
+                return;
+            }
+
+            const url = `https://api.apify.com/v2/datasets/${datasetId}/items?format=json`;
+
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('table-container').classList.add('hidden');
+
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error(`Gagal mengambil data: HTTP ${response.status}`);
+
+                const rawJson = await response.json();
+                let items = Array.isArray(rawJson) ? rawJson : (rawJson.data?.items || rawJson.data || []);
+
+                if (items.length === 0) {
+                    alert('Dataset kosong atau struktur tidak dikenali. Menampilkan demo data.');
+                    loadDemoData();
+                    return;
+                }
+
+                // Normalisasi dan Analisis Sentimen Sederhana untuk data Apify mentah
+                const processed = items.map(item => {
+                    const text = item.text || item.fullText || item.snippet || item.message || JSON.stringify(item);
+                    return {
+                        timestamp: item.createdAt || item.timestamp || new Date().toISOString().slice(0, 16).replace('T', ' '),
+                        author: item.author || item.username || item.user || 'Anonim',
+                        text: text,
+                        location: item.location || 'Indonesia',
+                        sentiment: analyzeSentiment(text)
+                    };
+                });
+
+                currentRawData = processed;
+                renderDashboard(processed);
+                updateConnectionStatus(true, 'Terhubung ke Apify');
+
+            } catch (error) {
+                console.error(error);
+                alert('Gagal menyambungkan ke Apify: ' + error.message + '. Memuat data demo sebagai fallback.');
+                loadDemoData();
+            }
+        }
+
+        function analyzeSentiment(text) {
+            const lower = text.toLowerCase();
+            const negativeWords = ['bahaya', 'panik', 'takut', 'parah', 'rusak', 'perih', 'sakit', 'marah', 'darurat', 'cedera'];
+            const positiveWords = ['aman', 'terkendali', 'alhamdulillah', 'sigap', 'lancar', 'baik', 'tenang', 'bersih', 'bantuan'];
+
+            let negScore = negativeWords.filter(w => lower.includes(w)).length;
+            let posScore = positiveWords.filter(w => lower.includes(w)).length;
+
+            if (negScore > posScore) return 'Negatif';
+            if (posScore > negScore) return 'Positif';
+            return 'Netral';
+        }
+
+        function updateConnectionStatus(isSuccess, message) {
+            const statusEl = document.getElementById('connection-status');
+            const dotColor = isSuccess ? 'bg-emerald-500' : 'bg-rose-500';
+            statusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span><span>${message}</span>`;
+        }
+
+        function renderDashboard(items) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('table-container').classList.remove('hidden');
+
+            // Hitung statistik
+            const total = items.length;
+            const positive = items.filter(i => i.sentiment === 'Positif').length;
+            const neutral = items.filter(i => i.sentiment === 'Netral').length;
+            const negative = items.filter(i => i.sentiment === 'Negatif').length;
+
+            document.getElementById('stat-positive').innerText = total ? Math.round((positive/total)*100) + '%' : '0%';
+            document.getElementById('stat-neutral').innerText = total ? Math.round((neutral/total)*100) + '%' : '0%';
+            document.getElementById('stat-negative').innerText = total ? Math.round((negative/total)*100) + '%' : '0%';
+
+            renderChart(positive, neutral, negative);
+            renderTableRows(items);
+        }
+
+        function renderChart(pos, neu, neg) {
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            if (sentimentChartInstance) sentimentChartInstance.destroy();
+
+            sentimentChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positif', 'Netral', 'Negatif'],
+                    datasets: [{
+                        data: [pos, neu, neg],
+                        backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTableRows(items) {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+            document.getElementById('data-counter').innerText = `${items.length} data ditampilkan`;
+
+            items.forEach(item => {
+                let badgeColor = 'bg-slate-800 text-slate-300 border-slate-700';
+                if (item.sentiment === 'Positif') badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                else if (item.sentiment === 'Netral') badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                else if (item.sentiment === 'Negatif') badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+
+                const row = `
+                    <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/50">
+                        <td class="px-4 py-3 text-slate-400 whitespace-nowrap">${item.timestamp}</td>
+                        <td class="px-4 py-3 font-medium text-white whitespace-nowrap">${item.author}</td>
+                        <td class="px-4 py-3 max-w-md text-slate-200">${item.text}</td>
+                        <td class="px-4 py-3 text-slate-400">${item.location}</td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold border ${badgeColor}">${item.sentiment}</span>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function filterTable() {
+            if (!currentRawData) return;
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = currentRawData.filter(item => 
+                item.text.toLowerCase().includes(query) || 
+                item.author.toLowerCase().includes(query) || 
+                item.location.toLowerCase().includes(query)
+            );
+            renderTableRows(filtered);
+        }
+
+        function exportData(type) {
+            if (!currentRawData) {
+                alert('Belum ada data untuk diexport!');
+                return;
+            }
+
+            let dataStr, filename, mimeType;
+            if (type === 'json') {
+                dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentRawData, null, 2));
+                filename = 'sentimen_krakatau.json';
+            } else {
+                let csv = 'Timestamp,Author,Text,Location,Sentiment\r\n';
+                currentRawData.forEach(i => {
+                    csv += `"${i.timestamp}","${i.author}","${i.text.replace(/"/g, '""')}","${i.location}","${i.sentiment}"\r\n`;
+                });
+                dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+                filename = 'sentimen_krakatau.csv';
+            }
+
+            const anchor = document.createElement('a');
+            anchor.href = dataStr;
+            anchor.download = filename;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+        }
+
+        // Muat otomatis demo data saat halaman dibuka agar langsung interaktif
+        window.onload = () => {
+            loadDemoData();
+        };
+    </script>
+</body>
+</html>
